@@ -322,6 +322,8 @@ void *ProcessControlMessage(void *args)
 		Message m;
 		numBytesRead = read( conn->sockDesc, &m, sizeof(Message) );
 
+		printf( "Read %d Bytes\n", numBytesRead );
+
 		if ( numBytesRead == 0 )
 		{
 			break;
