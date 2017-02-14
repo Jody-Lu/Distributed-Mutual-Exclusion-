@@ -14,7 +14,7 @@
 
 #define MAX_NUM_NODES 2
 #define PORT_START 55688
-#define MAX_CS_ENTRY 40
+#define MAX_CS_ENTRY 2
 
 using namespace std;
 
@@ -54,6 +54,8 @@ pthread_mutex_t dataMutex = PTHREAD_MUTEX_INITIALIZER;
 // Function declared
 int generateRandomeNumber(int min, int max);
 
+
+
 typedef struct
 {
 	int 					sockDesc;
@@ -70,6 +72,39 @@ struct Message
 	Message(string s, int id, int n): type(s), my_id(id), seqNo(n) {}
 	Message() {}
 };
+
+string messageSerialization(Message m);
+Message messageDeserialization(string s);
+
+
+string messageSerialization(Message m)
+{
+	// type,my_id,seqNo
+	string res = "";
+	res += ( m.type + "," + to_string(m.my_id) + "," + to_string(m.seqNo) );
+	return res;
+}
+
+Message messageDeserialization(string s)
+{
+	Message m;
+	int pos = 0, begin = 0;
+
+	pos = s.find_first_of( ",", begin );
+	m.type = s.substr( begin, pos);
+
+	begin = pos + 1;
+
+	pos = s.find_first_of( ",", begin );
+	m.my_id = atoi( s.substr( begin, pos ).c_str() );
+
+	begin = pos + 1;
+
+	pos = s.find_first_of( ",", begin );
+	m.seqNo = atoi( s.substr( begin, pos ).c_str() );
+
+	return m;
+}
 
 void initializationGlobalData(int id)
 {
@@ -120,7 +155,7 @@ void initializationGlobalData(int id)
 			//host = gethostbyname("dc01.utdallas.edu");
 			string hostname = "dc0" + symbols[i] + ".utdallas.edu";
 			host = gethostbyname( hostname.c_str() );
-
+			//host = gethostbyname( "127.0.0.1" );
 			if (host == NULL)
 			{
 				cout << "ERROR host" << endl;
@@ -220,13 +255,15 @@ void *ProcessCriticalSection(void *args)
 
 		Message m("REQUEST", myid, seqNo);
 
+		string mm = messageSerialization( m );
+
 		for ( int i = 0; i < MAX_NUM_NODES; i++ )
 		{
 			/* Send REQUEST only when there is no REPLY. */
 			if ( i != myid && !reply_from_node[i] )
 			{
 				num_message_send++;
-				send( sockfd[i], &m, sizeof(Message) + 1, 0 );
+				send( sockfd[i], &mm, sizeof(mm), 0 );
 			}
 		}
 
@@ -262,6 +299,8 @@ void *ProcessCriticalSection(void *args)
 
 		Message r("REPLY", myid, 0);
 
+		string rr = messageSerialization( r );
+
 		for ( int i = 0; i < MAX_NUM_NODES; i++ )
 		{
 			/* reply to all nodes that was defered. */
@@ -271,7 +310,7 @@ void *ProcessCriticalSection(void *args)
 				reply_from_node[i] = false;
 				receivedAllReply   = false;
 
-				send( sockfd[i], &r, sizeof(Message) + 1, 0 );
+				send( sockfd[i], &rr, sizeof(rr), 0 );
 			}
 		}
 		pthread_mutex_unlock( &dataMutex );
@@ -282,7 +321,9 @@ void *ProcessCriticalSection(void *args)
 	if ( myid != 0 )
 	{
 		Message complete( "COMPLETE", myid, 0 );
-		send( sockfd[0], &complete, sizeof(Message) + 1, 0 );
+		string cc = messageSerialization( complete );
+
+		send( sockfd[0], &cc, sizeof(cc), 0 );
 	}
 	else
 	{
@@ -322,10 +363,13 @@ void *ProcessControlMessage(void *args)
 	while ( 1 )
 	{
 		Message m;
-		numBytesRead = recv( conn->sockDesc, &m, sizeof(Message) + 1, 0 );
+		string mm;
+
+		numBytesRead = recv( conn->sockDesc, &mm, sizeof(mm), 0 );
+		m = messageDeserialization( mm );
 
 		printf( "Read %d Bytes from node: %d\n", numBytesRead, m.my_id );
-		// Segmentation Fault Here
+		// Here
 		printf( "Read %d bytes, type: %s, from node: %d seqNo: %d\n", numBytesRead, m.type.c_str(), m.my_id, m.seqNo);
 
 		if ( numBytesRead == 0 )
@@ -384,7 +428,9 @@ void *ProcessControlMessage(void *args)
 				receivedAllReply = false;
 
 				Message rpy("REPLY", myid, 0);
-				send( sockfd[m.my_id], &rpy, sizeof(Message) + 1, 0 );
+				string rr = messageSerialization( rpy );
+
+				send( sockfd[m.my_id], &rr, sizeof(rr), 0 );
 				printf( "Case2: Send REPLY message to node.\n" );
 
 			}
@@ -399,7 +445,9 @@ void *ProcessControlMessage(void *args)
 				receivedAllReply = false;
 
 				Message rpy("REPLY", myid, 0);
-				send( sockfd[m.my_id], &rpy, sizeof(Message) + 1, 0 );
+				string rr = messageSerialization( rpy );
+
+				send( sockfd[m.my_id], &rr, sizeof(rr), 0 );
 				printf( "Case3: Send REPLY message to node.\n" );
 
 				/*
@@ -459,11 +507,13 @@ void *ProcessControlMessage(void *args)
 					exitSession = true;
 
 					Message c( "COMPLETE", myid, 0 );
+					string cc = messageSerialization( c );
+
 					for ( int i = 0; i < MAX_NUM_NODES; i++ )
 					{
 						if ( i != myid )
 						{
-							send( sockfd[i], &c, sizeof(Message) + 1, 0 );
+							send( sockfd[i], &cc, sizeof(cc), 0 );
 						}
 					}
 				}
