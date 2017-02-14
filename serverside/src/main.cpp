@@ -358,7 +358,7 @@ void *ProcessControlMessage(void *args)
 
 	Connection *conn = (Connection *)args;
 
-	printf( "(PCM) conn->Desc: %d\n", conn->sockDesc );
+	//printf( "(PCM) conn->Desc: %d\n", conn->sockDesc );
 
 	while ( 1 )
 	{
@@ -368,7 +368,7 @@ void *ProcessControlMessage(void *args)
 		numBytesRead = recv( conn->sockDesc, &mm, sizeof(mm), 0 );
 		m = messageDeserialization( mm );
 
-		printf( "Read %d Bytes from node: %d\n", numBytesRead, m.my_id );
+		printf( "Read %d Bytes\n", numBytesRead);
 		// Here
 		printf( "Read %d bytes, type: %s, from node: %d seqNo: %d\n", numBytesRead, m.type.c_str(), m.my_id, m.seqNo);
 
@@ -618,7 +618,7 @@ int main(int argc, char const *argv[])
 
   	conn->sockDesc = accept( serverSock, (struct sockaddr *) &conn->clientAddr, (socklen_t *)&conn->addrLen );
 
-  	printf("sockDesc: %d\n", conn->sockDesc);
+  	//printf("sockDesc: %d\n", conn->sockDesc);
 
   	if ( conn->sockDesc <= 0 )
   	{
