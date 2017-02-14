@@ -74,7 +74,7 @@ struct Message
 };
 
 string messageSerialization(Message m);
-Message messageDeserialization(string s);
+Message messageDeserialization(char *s);
 
 
 string messageSerialization(Message m)
@@ -85,23 +85,24 @@ string messageSerialization(Message m)
 	return res;
 }
 
-Message messageDeserialization(string s)
+Message messageDeserialization(char *s)
 {
 	Message m;
+	string ss(s);
 	int pos = 0, begin = 0;
 
-	pos = s.find_first_of( ",", begin );
-	m.type = s.substr( begin, pos);
+	pos = ss.find_first_of( ",", begin );
+	m.type = ss.substr( begin, pos);
 
 	begin = pos + 1;
 
-	pos = s.find_first_of( ",", begin );
-	m.my_id = atoi( s.substr( begin, pos ).c_str() );
+	pos = ss.find_first_of( ",", begin );
+	m.my_id = atoi( ss.substr( begin, pos ).c_str() );
 
 	begin = pos + 1;
 
-	pos = s.find_first_of( ",", begin );
-	m.seqNo = atoi( s.substr( begin, pos ).c_str() );
+	pos = ss.find_first_of( ",", begin );
+	m.seqNo = atoi( ss.substr( begin, pos ).c_str() );
 
 	return m;
 }
@@ -263,7 +264,7 @@ void *ProcessCriticalSection(void *args)
 			if ( i != myid && !reply_from_node[i] )
 			{
 				num_message_send++;
-				send( sockfd[i], &mm, sizeof(mm), 0 );
+				send( sockfd[i], mm.c_str(), strlen(mm.c_str()), 0 );
 			}
 		}
 
@@ -310,7 +311,7 @@ void *ProcessCriticalSection(void *args)
 				reply_from_node[i] = false;
 				receivedAllReply   = false;
 
-				send( sockfd[i], &rr, sizeof(rr), 0 );
+				send( sockfd[i], rr.c_str(), strlen(rr.c_str()), 0 );
 			}
 		}
 		pthread_mutex_unlock( &dataMutex );
@@ -323,7 +324,7 @@ void *ProcessCriticalSection(void *args)
 		Message complete( "COMPLETE", myid, 0 );
 		string cc = messageSerialization( complete );
 
-		send( sockfd[0], &cc, sizeof(cc), 0 );
+		send( sockfd[0], cc.c_str(), strlen(cc.c_str()), 0 );
 	}
 	else
 	{
@@ -364,7 +365,7 @@ void *ProcessControlMessage(void *args)
 	{
 		Message m;
 		char buffer[256];
-
+		//string mm;
 		numBytesRead = recv( conn->sockDesc, buffer, 256, 0 );
 		m = messageDeserialization( buffer );
 
@@ -430,7 +431,7 @@ void *ProcessControlMessage(void *args)
 				Message rpy("REPLY", myid, 0);
 				string rr = messageSerialization( rpy );
 
-				send( sockfd[m.my_id], &rr, sizeof(rr), 0 );
+				send( sockfd[m.my_id], rr.c_str(), strlen(rr.c_str()), 0 );
 				printf( "Case2: Send REPLY message to node.\n" );
 
 			}
