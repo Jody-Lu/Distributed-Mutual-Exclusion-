@@ -51,11 +51,6 @@ struct sockaddr_in serverAddr; // address of this node
 // mutex
 pthread_mutex_t dataMutex = PTHREAD_MUTEX_INITIALIZER;
 
-// Function declared
-int generateRandomeNumber(int min, int max);
-
-
-
 typedef struct
 {
 	int 					sockDesc;
@@ -73,6 +68,8 @@ struct Message
 	Message() {}
 };
 
+// Function declared
+int generateRandomeNumber(int min, int max);
 string messageSerialization(Message m);
 Message messageDeserialization(char *s);
 
