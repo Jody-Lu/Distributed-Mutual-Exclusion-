@@ -14,7 +14,7 @@
 
 #define MAX_NUM_NODES 2
 #define PORT_START 5001
-#define MAX_CS_ENTRY 15
+#define MAX_CS_ENTRY 40
 
 using namespace std;
 
@@ -118,7 +118,7 @@ void initializationGlobalData(int id)
 
 			//host = gethostbyname("dc01.utdallas.edu");
 			//string hostname = "dc0" + to_string(myid + 1) + ".utdallas.edu";
-			host = gethostbyname("dc02.utdallas.edu");
+			host = gethostbyname("127.0.0.1");
 
 			if (host == NULL)
 			{
@@ -494,7 +494,7 @@ void *ProcessControlMessage(void *args)
 	Connection *con = (Connection *)args;
 	close( con->sockDesc );
 	free( con );
-	pthread_exit( 0 );
+	//pthread_exit( 0 );
 }
 
 
@@ -511,7 +511,6 @@ int main(int argc, char const *argv[])
 
 	initializationGlobalData( atoi(argv[1]) );
 
-  memset( &serverAddr, 0, sizeof(sockaddr_in) );
   serverSock = socket( AF_INET, SOCK_STREAM, 0 );
 
   if ( serverSock <= 0 )
@@ -520,6 +519,7 @@ int main(int argc, char const *argv[])
   	return -1;
   }
 
+  memset( &serverAddr, 0, sizeof(sockaddr_in) );
   serverAddr.sin_family = AF_INET;
   serverAddr.sin_addr.s_addr = INADDR_ANY;
   serverAddr.sin_port = htons(portno[myid]);
