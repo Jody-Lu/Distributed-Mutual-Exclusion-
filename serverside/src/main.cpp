@@ -568,6 +568,7 @@ int main(int argc, char const *argv[])
   	{
   		free( conn );
   		cout << "ERROR accepting" << endl;
+  		return -1;
   	}
   	else
   	{
