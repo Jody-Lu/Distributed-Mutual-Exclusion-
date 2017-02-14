@@ -104,6 +104,8 @@ Message messageDeserialization(char *s)
 	pos = ss.find_first_of( ",", begin );
 	m.seqNo = atoi( ss.substr( begin, pos ).c_str() );
 
+	printf("type: %s, id: %d, seqNo: %d\n", m.type.c_str(), m.my_id, m.seqNo);
+
 	return m;
 }
 
@@ -255,7 +257,6 @@ void *ProcessCriticalSection(void *args)
 		seqNo = highestSeqNum + 1;
 
 		Message m("REQUEST", myid, seqNo);
-
 		string mm = messageSerialization( m );
 
 		for ( int i = 0; i < MAX_NUM_NODES; i++ )
@@ -324,7 +325,7 @@ void *ProcessCriticalSection(void *args)
 		Message complete( "COMPLETE", myid, 0 );
 		string cc = messageSerialization( complete );
 
-		send( sockfd[0], cc.c_str(), strlen(cc.c_str()), 0 );
+		send( sockfd[0], cc.c_str(), strlen(cc.c_str()) + 1, 0 );
 	}
 	else
 	{
@@ -514,7 +515,7 @@ void *ProcessControlMessage(void *args)
 					{
 						if ( i != myid )
 						{
-							send( sockfd[i], &cc, sizeof(cc), 0 );
+							send( sockfd[i], cc.c_str(), strlen(cc.c_str()), 0 );
 						}
 					}
 				}
