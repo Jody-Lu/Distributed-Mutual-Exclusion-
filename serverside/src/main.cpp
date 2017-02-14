@@ -324,10 +324,12 @@ void *ProcessControlMessage(void *args)
 
 		printf( "Read %d Bytes\n", numBytesRead );
 
+		/*
 		if ( numBytesRead == 0 )
 		{
 			break;
 		}
+		*/
 
 		printf( "Read %d bytes, type: %s, from node: %d seqNo: %d\n", numBytesRead, m.type.c_str(), m.my_id, m.seqNo);
 
