@@ -14,7 +14,7 @@
 
 #define MAX_NUM_NODES 2
 #define PORT_START 55688
-#define MAX_CS_ENTRY 2
+#define MAX_CS_ENTRY 40
 
 using namespace std;
 
