@@ -317,6 +317,8 @@ void *ProcessControlMessage(void *args)
 
 	Connection *conn = (Connection *)args;
 
+	printf( "(PCM) conn->Desc: %d\n", conn->sockDesc );
+
 	while ( 1 )
 	{
 		Message m;
