@@ -13,7 +13,7 @@
 #include "server.h"
 
 #define MAX_NUM_NODES 2
-#define PORT_START 5000
+#define PORT_START 5001
 #define MAX_CS_ENTRY 15
 
 using namespace std;
@@ -116,7 +116,9 @@ void initializationGlobalData(int id)
 			serv_addr[i].sin_family = AF_INET;
 			serv_addr[i].sin_port   = htons(portno[i]);
 
-			host = gethostbyname("127.0.0.1");
+			//host = gethostbyname("dc01.utdallas.edu");
+			//string hostname = "dc0" + to_string(myid + 1) + ".utdallas.edu";
+			host = gethostbyname("dc02.utdallas.edu");
 
 			if (host == NULL)
 			{
@@ -459,7 +461,6 @@ void *ProcessControlMessage(void *args)
 			}
 			else if (m.my_id == 0)
 			{
-				//printf("Set exit session %d\n", m.my_id);
 				exitSession = true;
 			}
 			pthread_mutex_unlock( &dataMutex );
@@ -549,6 +550,13 @@ int main(int argc, char const *argv[])
   while ( 1 )
   {
   	conn = (Connection*)malloc(sizeof(Connection));
+
+  	if ( conn == NULL )
+  	{
+  		printf("ERROR Memory allocation\n");
+  		return -1;
+  	}
+
   	conn->sockDesc = accept( serverSock, (struct sockaddr *) &conn->clientAddr, (socklen_t *)&conn->addrLen );
 
   	if ( conn->sockDesc <= 0 )
@@ -561,12 +569,13 @@ int main(int argc, char const *argv[])
   		pthread_create( &connThread, 0, ProcessControlMessage, (void *)conn );
   		pthread_detach( connThread );
   	}
-
+  	/*
   	if ( exitSession )
   	{
   		printf("exitSession: %d\n", exitSession);
   		break;
   	}
+  	*/
   }
 
   printf("Computation completes\n");
