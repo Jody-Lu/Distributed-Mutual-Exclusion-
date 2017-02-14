@@ -233,6 +233,7 @@ void *ProcessCriticalSection(void *args)
 		pthread_mutex_unlock( &dataMutex );
 
 		/* After sending REQUESTs, wait until receiving all REPLYs */
+		printf("Entering CS\n");
 		while ( 1 )
 		{
 			pthread_mutex_lock( &dataMutex );
@@ -255,6 +256,7 @@ void *ProcessCriticalSection(void *args)
 		}
 
 		/* After entering CS, send REPLYs to nodes in defer_node */
+		printf("Sending REPLY\n");
 		pthread_mutex_lock( &dataMutex );
 		usingCS = false;
 
