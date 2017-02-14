@@ -320,7 +320,7 @@ void *ProcessControlMessage(void *args)
 	while ( 1 )
 	{
 		Message m;
-		numBytesRead = read( conn->sockDesc, &m, sizeof(Message) );
+		numBytesRead = recv( conn->sockDesc, &m, sizeof(Message), 0 );
 
 		printf( "Read %d Bytes\n", numBytesRead );
 
@@ -499,7 +499,7 @@ void *ProcessControlMessage(void *args)
 	Connection *con = (Connection *)args;
 	close( con->sockDesc );
 	free( con );
-	//pthread_exit( 0 );
+	pthread_exit( 0 );
 }
 
 
