@@ -564,6 +564,8 @@ int main(int argc, char const *argv[])
 
   	conn->sockDesc = accept( serverSock, (struct sockaddr *) &conn->clientAddr, (socklen_t *)&conn->addrLen );
 
+  	printf("sockDesc: %d\n", conn->sockDesc);
+
   	if ( conn->sockDesc <= 0 )
   	{
   		free( conn );
@@ -575,13 +577,6 @@ int main(int argc, char const *argv[])
   		pthread_create( &connThread, 0, ProcessControlMessage, (void *)conn );
   		pthread_detach( connThread );
   	}
-  	/*
-  	if ( exitSession )
-  	{
-  		printf("exitSession: %d\n", exitSession);
-  		break;
-  	}
-  	*/
   }
 
   printf("Computation completes\n");
