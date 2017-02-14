@@ -127,7 +127,6 @@ void initializationGlobalData(int id)
 	all_nodes_connected = false;
 	receivedAllReply 	  = false;
 	exitSession					= false;
-	string symbols[MAX_NUM_NODES]			= { "1", "2" };
 
 	for ( int i = 0; i < MAX_NUM_NODES; i++ )
 	{
@@ -155,8 +154,7 @@ void initializationGlobalData(int id)
 			serv_addr[i].sin_family = AF_INET;
 			serv_addr[i].sin_port   = htons(portno[i]);
 
-			//host = gethostbyname("dc01.utdallas.edu");
-			string hostname = "dc0" + symbols[i] + ".utdallas.edu";
+			string hostname = "dc0" + to_string(i + 1) + ".utdallas.edu";
 			host = gethostbyname( hostname.c_str() );
 			//host = gethostbyname( "127.0.0.1" );
 			if (host == NULL)
