@@ -226,7 +226,7 @@ void *ProcessCriticalSection(void *args)
 			if ( i != myid && !reply_from_node[i] )
 			{
 				num_message_send++;
-				send( sockfd[i], &m, sizeof(Message), 0 );
+				send( sockfd[i], &m, sizeof(Message) + 1, 0 );
 			}
 		}
 
@@ -271,7 +271,7 @@ void *ProcessCriticalSection(void *args)
 				reply_from_node[i] = false;
 				receivedAllReply   = false;
 
-				send( sockfd[i], &r, sizeof(r), 0 );
+				send( sockfd[i], &r, sizeof(Message) + 1, 0 );
 			}
 		}
 		pthread_mutex_unlock( &dataMutex );
@@ -282,7 +282,7 @@ void *ProcessCriticalSection(void *args)
 	if ( myid != 0 )
 	{
 		Message complete( "COMPLETE", myid, 0 );
-		send( sockfd[0], &complete, sizeof(complete), 0 );
+		send( sockfd[0], &complete, sizeof(Message) + 1, 0 );
 	}
 	else
 	{
@@ -322,7 +322,7 @@ void *ProcessControlMessage(void *args)
 	while ( 1 )
 	{
 		Message m;
-		numBytesRead = recv( conn->sockDesc, &m, sizeof(Message), 0 );
+		numBytesRead = recv( conn->sockDesc, &m, sizeof(Message) + 1, 0 );
 
 		printf( "Read %d Bytes from node: %d\n", numBytesRead, m.my_id );
 		// Segmentation Fault Here
@@ -384,7 +384,7 @@ void *ProcessControlMessage(void *args)
 				receivedAllReply = false;
 
 				Message rpy("REPLY", myid, 0);
-				send( sockfd[m.my_id], &rpy, sizeof(Message), 0 );
+				send( sockfd[m.my_id], &rpy, sizeof(Message) + 1, 0 );
 				printf( "Case2: Send REPLY message to node.\n" );
 
 			}
@@ -399,7 +399,7 @@ void *ProcessControlMessage(void *args)
 				receivedAllReply = false;
 
 				Message rpy("REPLY", myid, 0);
-				send( sockfd[m.my_id], &rpy, sizeof(Message), 0 );
+				send( sockfd[m.my_id], &rpy, sizeof(Message) + 1, 0 );
 				printf( "Case3: Send REPLY message to node.\n" );
 
 				/*
@@ -463,7 +463,7 @@ void *ProcessControlMessage(void *args)
 					{
 						if ( i != myid )
 						{
-							send( sockfd[i], &c, sizeof(c), 0 );
+							send( sockfd[i], &c, sizeof(Message) + 1, 0 );
 						}
 					}
 				}
