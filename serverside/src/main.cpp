@@ -366,7 +366,7 @@ void *ProcessControlMessage(void *args)
 		char buffer[256];
 
 		numBytesRead = recv( conn->sockDesc, buffer, 256, 0 );
-		m = messageDeserialization( mm );
+		m = messageDeserialization( buffer );
 
 		printf( "Read %d Bytes\n", numBytesRead);
 		// Here
