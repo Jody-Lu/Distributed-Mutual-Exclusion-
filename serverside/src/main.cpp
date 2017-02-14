@@ -324,7 +324,7 @@ void *ProcessControlMessage(void *args)
 		Message m;
 		numBytesRead = recv( conn->sockDesc, &m, sizeof(Message), 0 );
 
-		printf( "Read %d Bytes from node: %d\n", numBytesRead, m.my_id );
+		//printf( "Read %d Bytes from node: %d\n", numBytesRead, m.my_id );
 		printf( "Read %d bytes, type: %s, from node: %d seqNo: %d\n", numBytesRead, m.type.c_str(), m.my_id, m.seqNo);
 
 		if ( numBytesRead == 0 )
