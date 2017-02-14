@@ -13,7 +13,7 @@
 #include "server.h"
 
 #define MAX_NUM_NODES 2
-#define PORT_START 5001
+#define PORT_START 55688
 #define MAX_CS_ENTRY 40
 
 using namespace std;
@@ -175,12 +175,10 @@ void *ProcessCriticalSection(void *args)
 				cout << "Successfully connecting to node: " << i << endl;
 				activeConnection[i] = true;
 			}
-			/*
 			else
 			{
 				close(sockfd[i]);
 			}
-			*/
 		}
 	}
 	all_nodes_connected = true;
