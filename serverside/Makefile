@@ -10,7 +10,7 @@ OBJDIR=./obj
 #OBJ=$(OBJDIR)/main.o $(OBJDIR)/mythread.o $(OBJDIR)/server.o $(OBJDIR)/client.o
 OBJ=$(OBJDIR)/main.o
 BINDIR=./bin
-BIN=$(BINDIR)/chat
+BIN=$(BINDIR)/node
 
 
 all: $(BIN) 
