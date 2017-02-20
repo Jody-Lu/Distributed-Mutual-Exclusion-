@@ -12,7 +12,7 @@
 #include "mythread.h"
 #include "server.h"
 
-#define MAX_NUM_NODES 9
+#define MAX_NUM_NODES 2
 #define PORT_START 55688
 #define MAX_CS_ENTRY 40
 #define MAX_BUFFER_SIZE
@@ -118,7 +118,6 @@ void initializationGlobalData(int id)
 	seqNo 					= 0;
 	num_message_send 		= 0;
 	num_message_recv 		= 0;
-	//no_cs_entry 		 	= 0;
 	highestSeqNum			= 0;
 	usingCS 			   	= false;
 	waitingCS        		= false;
@@ -153,7 +152,17 @@ void initializationGlobalData(int id)
 			serv_addr[i].sin_port   = htons(portno[i]);
 
 			/* Set hostname */
-			string hostname = "dc0" + to_string(i + 1) + ".utdallas.edu";
+			string num_str = "";
+			if ( i + 1 < 10 )
+			{
+				num_str = "0" + to_string( i + 1 );
+			}
+			else
+			{
+				num_str = to_string( i + 1 );
+			}
+
+			string hostname = "dc" + num_str + ".utdallas.edu";
 			host = gethostbyname( hostname.c_str() );
 
 			if (host == NULL)
@@ -556,6 +565,7 @@ void *ProcessControlMessage(void *args)
 	Connection *con = (Connection *)args;
 	close( con->sockDesc );
 	free( con );
+
 	pthread_exit( 0 );
 }
 
@@ -581,10 +591,10 @@ int main( int argc, char const *argv[] )
   	return -1;
   }
 
-  memset( &serverAddr, 0, sizeof(sockaddr_in) );
+  memset( &serverAddr, 0, sizeof( sockaddr_in ) );
   serverAddr.sin_family = AF_INET;
   serverAddr.sin_addr.s_addr = INADDR_ANY;
-  serverAddr.sin_port = htons(portno[myid]);
+  serverAddr.sin_port = htons( portno[myid] );
 
   int yes = 1;
 
@@ -633,6 +643,10 @@ int main( int argc, char const *argv[] )
   	{
   		pthread_create( &connThread, 0, ProcessControlMessage, (void *)conn );
   		pthread_detach( connThread );
+  	}
+  	if ( exitSession )
+  	{
+  		break;
   	}
   }
 
