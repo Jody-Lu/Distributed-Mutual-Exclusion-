@@ -211,10 +211,10 @@ void *ProcessCriticalSection(void *args)
 				cout << "Successfully connecting to node: " << i << endl;
 				activeConnection[i] = true;
 			}
-			//else
-			//{
-			//	close(sockfd[i]);
-			//}
+			else
+			{
+				close(sockfd[i]);
+			}
 		}
 	}
 	all_nodes_connected = true;
