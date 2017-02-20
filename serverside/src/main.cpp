@@ -354,6 +354,7 @@ void *ProcessCriticalSection(void *args)
 	pthread_mutex_unlock( &dataMutex );
 
 	printf("Total sending message: %d\n", num_message_send);
+	printf("Total receiving message: %d\n", num_message_recv);
 	printf("Exit Session ProcessCriticalSection() thread\n");
 	pthread_exit( 0 );
 }
@@ -512,6 +513,8 @@ void *ProcessControlMessage(void *args)
 		else if ( m.type == "COMPLETE" )
 		{
 			pthread_mutex_lock( &dataMutex );
+			num_message_recv++;
+
 			if ( myid == 0 )
 			{
 				exitCompute = true;
@@ -567,7 +570,6 @@ void *ProcessControlMessage(void *args)
 		}
 		pthread_mutex_unlock( &dataMutex );
 	}
-
 	printf("Exit Session ProcessControl() thread\n");
 	Connection *con = (Connection *)args;
 	close( con->sockDesc );
