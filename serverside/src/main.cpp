@@ -41,6 +41,7 @@ int num_message_send; // messages sent by this node
 int num_message_recv; // messages received by this node
 //int no_cs_entry;			// times of entering CS
 int highestSeqNum;
+int requestCount, replyCount;
 
 bool usingCS;							// whether this node is using CS
 bool waitingCS;						// whether this node is waiting CS
@@ -255,7 +256,8 @@ void *ProcessCriticalSection(void *args)
 		pthread_mutex_lock( &dataMutex );
 
 		//printf( "Send REQUEST and wait CS\n" );
-
+		requestCount = 0;
+		replyCount = 0;
 		waitingCS = true;
 		seqNo = highestSeqNum + 1;
 
@@ -270,6 +272,7 @@ void *ProcessCriticalSection(void *args)
 			/* Send REQUEST only when there is no REPLY. */
 			if ( i != myid && !reply_from_node[i] )
 			{
+				requestCount++;
 				num_message_send++;
 				send( sockfd[i], mm.c_str(), strlen(mm.c_str()), 0 );
 			}
@@ -291,8 +294,9 @@ void *ProcessCriticalSection(void *args)
 				waitingCS = false;
 				no_cs_entry++;
 
+				printf("REQUESTs: %d, REPLYs: %d\n", requestCount, replyCount);
 				printf("Time elapsed: %d \n", end - begin);
-				printf( "Entering...\n");
+				printf("Entering...\n");
 				usleep( 30000 );
 				pthread_mutex_unlock( &dataMutex );
 				break;
@@ -463,6 +467,7 @@ void *ProcessControlMessage(void *args)
 				string msg = messageSerialization( rpy );
 
 				num_message_send++;
+				requestCount++;
 				send( sockfd[m.my_id], msg.c_str(), strlen( msg.c_str() ), 0 );
 				//printf( "ProcessControlMessage() -- Case3: Send REPLY message to node.\n" );
 
@@ -480,7 +485,7 @@ void *ProcessControlMessage(void *args)
 			counter = 0;
 
 			pthread_mutex_lock( &dataMutex );
-
+			requestCount++;
 			num_message_recv++;
 			count_reply++;
 			reply_from_node[m.my_id] = true;
