@@ -350,6 +350,7 @@ void *ProcessCriticalSection(void *args)
 	else
 	{
 		completeNode[0] = true;
+		printf("Total sending message: %d\n", num_message_send);
 	}
 
 	pthread_mutex_unlock( &dataMutex );
@@ -559,13 +560,13 @@ void *ProcessControlMessage(void *args)
 					close( sockfd[i] );
 				}
 			}
-
+			/*
 			for ( int i = 0; i < MAX_NUM_NODES; i++ )
 			{
 				printf( "%d", completeNode[i] );
 			}
 			printf( "\n" );
-
+			*/
 			pthread_mutex_unlock( &dataMutex );
 			break;
 		}
