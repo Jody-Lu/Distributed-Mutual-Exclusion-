@@ -188,14 +188,6 @@ void initializationGlobalData(int id)
 	return;
 }
 
-/*
- Connect to all nodes
- wait
- send message
- receive message
- enter CS
- reply
-*/
 void *ProcessCriticalSection(void *args)
 {
 
@@ -299,7 +291,8 @@ void *ProcessCriticalSection(void *args)
 				waitingCS = false;
 				no_cs_entry++;
 
-				printf( "entering: %ld\n", end - begin);
+				printf("Time elapsed: %d \n", end - begin);
+				printf( "Entering...\n");
 				usleep( 30000 );
 				pthread_mutex_unlock( &dataMutex );
 				break;
@@ -330,7 +323,7 @@ void *ProcessCriticalSection(void *args)
 				reply_from_node[i] = false;
 				receivedAllReply   = false;
 
-				send( sockfd[i], rr.c_str(), strlen(rr.c_str()), 0 );
+				send( sockfd[i], rr.c_str(), strlen( rr.c_str() ), 0 );
 			}
 		}
 		pthread_mutex_unlock( &dataMutex );
@@ -477,6 +470,7 @@ void *ProcessControlMessage(void *args)
 
 				Message r( "REQUEST", myid, seqNo );
 				string rr = messageSerialization( r );
+				num_message_send++;
 				send( sockfd[m.my_id], rr.c_str(), strlen( rr.c_str() ), 0 );
 			}
 			pthread_mutex_unlock( &dataMutex );
