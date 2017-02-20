@@ -554,12 +554,14 @@ void *ProcessControlMessage(void *args)
 				printf( "%d", completeNode[i] );
 			}
 			printf( "\n" );
-			printf("e: %d\n", exitSession);
 
 			pthread_mutex_unlock( &dataMutex );
 			break;
 		}
-		pthread_mutex_unlock( &dataMutex );
+		else
+		{
+			pthread_mutex_unlock( &dataMutex );
+		}
 	}
 	printf("Exit Session ProcessControl() thread\n");
 	Connection *con = (Connection *)args;
