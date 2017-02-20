@@ -12,7 +12,7 @@
 #include "mythread.h"
 #include "server.h"
 
-#define MAX_NUM_NODES 3
+#define MAX_NUM_NODES 5
 #define PORT_START 55688
 #define MAX_CS_ENTRY 40
 #define MAX_BUFFER_SIZE
@@ -249,6 +249,7 @@ void *ProcessCriticalSection(void *args)
 
 		/* Send REQUEST */
 		pthread_mutex_lock( &dataMutex );
+
 		printf( "Send REQUEST and wait CS\n" );
 
 		waitingCS = true;
@@ -295,6 +296,7 @@ void *ProcessCriticalSection(void *args)
 		/* After entering CS, send REPLYs to nodes in defer_node */
 		printf("Sending REPLY\n");
 		pthread_mutex_lock( &dataMutex );
+
 		usingCS = false;
 
 		Message r("REPLY", myid, 0);
@@ -306,7 +308,7 @@ void *ProcessCriticalSection(void *args)
 			/* reply to all nodes that was defered. */
 			if ( i != myid && defer_node[i] )
 			{
-				defer_node[i] 		 = false;
+				defer_node[i] 	   = false;
 				reply_from_node[i] = false;
 				receivedAllReply   = false;
 
@@ -332,7 +334,7 @@ void *ProcessCriticalSection(void *args)
 
 	pthread_mutex_unlock( &dataMutex );
 
-	printf("Exit Session (Process Critical Section)\n");
+	printf("Exit Session ProcessCriticalSection() thread\n");
 	pthread_exit( 0 );
 }
 
