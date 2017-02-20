@@ -12,7 +12,7 @@
 #include "mythread.h"
 #include "server.h"
 
-#define MAX_NUM_NODES 7
+#define MAX_NUM_NODES 9
 #define PORT_START 55688
 #define MAX_CS_ENTRY 40
 #define MAX_BUFFER_SIZE
@@ -552,7 +552,7 @@ void *ProcessControlMessage(void *args)
 		}
 		pthread_mutex_unlock( &dataMutex );
 	}
-	printf("Exit Session (Process Control)\n");
+	printf("Exit Session ProcessControl() thread\n");
 	Connection *con = (Connection *)args;
 	close( con->sockDesc );
 	free( con );
