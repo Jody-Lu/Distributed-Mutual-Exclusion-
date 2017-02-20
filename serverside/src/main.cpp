@@ -12,7 +12,7 @@
 #include "mythread.h"
 #include "server.h"
 
-#define MAX_NUM_NODES 9
+#define MAX_NUM_NODES 3
 #define PORT_START 55688
 #define MAX_CS_ENTRY 40
 #define MAX_BUFFER_SIZE
@@ -38,7 +38,7 @@ int serverSock;				// socket of this node
 int myid;         		// id of this node
 int num_message_send; // messages sent by this node
 int num_message_recv; // messages received by this node
-int no_cs_entry;			// times of entering CS
+//int no_cs_entry;			// times of entering CS
 int highestSeqNum;
 
 bool usingCS;							// whether this node is using CS
@@ -118,7 +118,7 @@ void initializationGlobalData(int id)
 	seqNo 					= 0;
 	num_message_send 		= 0;
 	num_message_recv 		= 0;
-	no_cs_entry 		 	= 0;
+	//no_cs_entry 		 	= 0;
 	highestSeqNum			= 0;
 	usingCS 			   	= false;
 	waitingCS        		= false;
@@ -190,6 +190,7 @@ void *ProcessCriticalSection(void *args)
 {
 
 	int time_to_wait = 0;
+	int no_cs_entry = 0;
 
 	/* Connect to all other nodes */
 	pthread_mutex_lock( &dataMutex );
@@ -210,10 +211,10 @@ void *ProcessCriticalSection(void *args)
 				cout << "Successfully connecting to node: " << i << endl;
 				activeConnection[i] = true;
 			}
-			else
-			{
-				close(sockfd[i]);
-			}
+			//else
+			//{
+			//	close(sockfd[i]);
+			//}
 		}
 	}
 	all_nodes_connected = true;
