@@ -12,7 +12,7 @@
 #include "mythread.h"
 #include "server.h"
 
-#define MAX_NUM_NODES 2
+#define MAX_NUM_NODES 4
 #define PORT_START 55688
 #define MAX_CS_ENTRY 40
 
@@ -555,12 +555,12 @@ void *ProcessControlMessage(void *args)
 
 
 // Generate random number between a and b
-int generateRandomeNumber(int min, int max)
+int generateRandomeNumber( int min, int max )
 {
 	return rand() % min + max;
 }
 
-int main(int argc, char const *argv[])
+int main( int argc, char const *argv[] )
 {
 
 	Connection *conn;
