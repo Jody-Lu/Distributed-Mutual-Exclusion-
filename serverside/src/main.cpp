@@ -2,16 +2,17 @@
 #include <string>
 
 #include <sys/types.h>
+#include <sys/socket.h>
 #include <netinet/in.h>
 #include <netdb.h>
 #include <unistd.h>
 #include <stdlib.h>
 #include <time.h>
+#include <pthread.h>
 #include <sys/time.h>
 #include <ctime>
-
-#include "mythread.h"
-#include "server.h"
+#include <cstdlib>
+#include <cstring>
 
 #define MAX_NUM_NODES 10
 #define PORT_START 55688
@@ -274,7 +275,7 @@ void *ProcessCriticalSection(void *args)
 			{
 				requestCount++;
 				num_message_send++;
-				send( sockfd[i], mm.c_str(), strlen(mm.c_str()), 0 );
+				send( sockfd[i], mm.c_str(), strlen( mm.c_str() ), 0 );
 			}
 		}
 
@@ -295,7 +296,7 @@ void *ProcessCriticalSection(void *args)
 				no_cs_entry++;
 
 				printf("REQUESTs: %d, REPLYs: %d\n", requestCount, replyCount);
-				printf("Time elapsed: %d \n", end - begin);
+				printf("Time elapsed: %ld \n", end - begin);
 				printf("Entering...\n");
 				usleep( 30000 );
 				pthread_mutex_unlock( &dataMutex );
@@ -341,7 +342,7 @@ void *ProcessCriticalSection(void *args)
 		string cc = messageSerialization( complete );
 
 		num_message_send++;
-		send( sockfd[0], cc.c_str(), strlen(cc.c_str()) + 1, 0 );
+		send( sockfd[0], cc.c_str(), strlen( cc.c_str() ) + 1, 0 );
 	}
 	else
 	{
