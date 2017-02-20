@@ -7,6 +7,7 @@
 #include <unistd.h>
 #include <stdlib.h>
 #include <time.h>
+#include <sys/time.h>
 #include <ctime>
 
 #include "mythread.h"
@@ -200,6 +201,8 @@ void *ProcessCriticalSection(void *args)
 
 	int time_to_wait = 0;
 	int no_cs_entry = 0;
+	struct timeval tv;
+	long begin, end;
 
 	/* Connect to all other nodes */
 	pthread_mutex_lock( &dataMutex );
@@ -267,6 +270,9 @@ void *ProcessCriticalSection(void *args)
 		Message m("REQUEST", myid, seqNo);
 		string mm = messageSerialization( m );
 
+		gettimeofday( &tv, NULL );
+		begin = tv.tv_sec * 1000 + tv.tv_usec / 1000;
+
 		for ( int i = 0; i < MAX_NUM_NODES; i++ )
 		{
 			/* Send REQUEST only when there is no REPLY. */
@@ -287,11 +293,13 @@ void *ProcessCriticalSection(void *args)
 
 			if ( receivedAllReply )
 			{
+				gettimeofday( &tv, NULL );
+				end = tv.tv_sec * 1000 + tv.tv_usec / 1000;
 				usingCS = true;
 				waitingCS = false;
 				no_cs_entry++;
 
-				printf( "entering\n" );
+				printf( "entering: %ld\n", end - begin);
 				usleep( 30000 );
 				pthread_mutex_unlock( &dataMutex );
 				break;
@@ -317,6 +325,7 @@ void *ProcessCriticalSection(void *args)
 			/* reply to all nodes that was defered. */
 			if ( i != myid && defer_node[i] )
 			{
+				num_message_send++;
 				defer_node[i] 	   = false;
 				reply_from_node[i] = false;
 				receivedAllReply   = false;
@@ -334,7 +343,9 @@ void *ProcessCriticalSection(void *args)
 		Message complete( "COMPLETE", myid, 0 );
 		string cc = messageSerialization( complete );
 
+		num_message_send++;
 		send( sockfd[0], cc.c_str(), strlen(cc.c_str()) + 1, 0 );
+		printf("Total sending message: %d\n", num_message_send);
 	}
 	else
 	{
@@ -558,10 +569,7 @@ void *ProcessControlMessage(void *args)
 			pthread_mutex_unlock( &dataMutex );
 			break;
 		}
-		else
-		{
-			pthread_mutex_unlock( &dataMutex );
-		}
+		pthread_mutex_unlock( &dataMutex );
 	}
 	printf("Exit Session ProcessControl() thread\n");
 	Connection *con = (Connection *)args;
