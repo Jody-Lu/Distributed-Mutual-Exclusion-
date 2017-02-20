@@ -15,6 +15,7 @@
 #define MAX_NUM_NODES 4
 #define PORT_START 55688
 #define MAX_CS_ENTRY 40
+#define MAX_BUFFER_SIZE
 
 using namespace std;
 
@@ -130,8 +131,8 @@ void initializationGlobalData(int id)
 		/* Initialize active connection */
 		activeConnection[i] = false;
 		reply_from_node[i]  = false;
-		defer_node[i] 			= false;
-		completeNode[i]			= false;
+		defer_node[i] 		= false;
+		completeNode[i]		= false;
 
 		/* Initialize port number */
 		portno[i] = PORT_START + i;
@@ -139,9 +140,9 @@ void initializationGlobalData(int id)
 		if ( i != myid )
 		{
 			/* Initialize sockfd */
-			sockfd[i] = socket(AF_INET, SOCK_STREAM, 0);
+			sockfd[i] = socket( AF_INET, SOCK_STREAM, 0 );
 
-			if ( sockfd[i] < 0 )
+			if ( sockfd[i] <= 0 )
 			{
 				cerr << "ERROR opening socket" << endl;
 			}
@@ -151,9 +152,10 @@ void initializationGlobalData(int id)
 			serv_addr[i].sin_family = AF_INET;
 			serv_addr[i].sin_port   = htons(portno[i]);
 
+			/* Set hostname */
 			string hostname = "dc0" + to_string(i + 1) + ".utdallas.edu";
 			host = gethostbyname( hostname.c_str() );
-			//host = gethostbyname( "127.0.0.1" );
+
 			if (host == NULL)
 			{
 				cout << "ERROR host" << endl;
@@ -341,10 +343,11 @@ void *ProcessCriticalSection(void *args)
 void *ProcessControlMessage(void *args)
 {
 
+	Connection* conn;
 	int numBytesRead = 0;
 	int numBytesSend = 0;
 	int count_reply  = 0;
-	int counter 		 = 0;
+	int counter      = 0;
 	bool myPriority  = false;
 	bool exitCompute = false;
 
@@ -353,7 +356,7 @@ void *ProcessControlMessage(void *args)
 		pthread_exit(0);
 	}
 
-	Connection *conn = (Connection *)args;
+	conn = (Connection *)args;
 
 	//printf( "(PCM) conn->Desc: %d\n", conn->sockDesc );
 
@@ -361,12 +364,10 @@ void *ProcessControlMessage(void *args)
 	{
 		Message m;
 		char buffer[256];
-		//string mm;
+
 		numBytesRead = recv( conn->sockDesc, buffer, 256, 0 );
 		m = messageDeserialization( buffer );
 
-		printf( "Read %d Bytes\n", numBytesRead);
-		// Here
 		printf( "Read %d bytes, type: %s, from node: %d seqNo: %d\n", numBytesRead, m.type.c_str(), m.my_id, m.seqNo);
 
 		if ( numBytesRead == 0 )
@@ -374,11 +375,10 @@ void *ProcessControlMessage(void *args)
 			break;
 		}
 
-		//printf( "Read %d bytes, type: %s, from node: %d seqNo: %d\n", numBytesRead, m.type.c_str(), m.my_id, m.seqNo);
-
 		if ( m.type == "REQUEST" )
 		{
 			pthread_mutex_lock( &dataMutex );
+
 			while ( 1 )
 			{
 				if ( all_nodes_connected )
@@ -411,7 +411,7 @@ void *ProcessControlMessage(void *args)
 				then defering the comming REQUEST.
 				 */
 				defer_node[m.my_id] = true;
-				printf( "Case 1: Defer comming REQUEST.\n" );
+				printf( "ProcessControlMessage() -- Case 1: Defer comming REQUEST.\n" );
 
 			}
 			else if ( ( !usingCS || !waitingCS ) || ( waitingCS && !reply_from_node[m.my_id] && !myPriority ) )
@@ -425,10 +425,10 @@ void *ProcessControlMessage(void *args)
 				receivedAllReply = false;
 
 				Message rpy("REPLY", myid, 0);
-				string rr = messageSerialization( rpy );
+				string msg = messageSerialization( rpy );
 
-				send( sockfd[m.my_id], rr.c_str(), strlen(rr.c_str()), 0 );
-				printf( "Case2: Send REPLY message to node.\n" );
+				send( sockfd[m.my_id], msg.c_str(), strlen( msg.c_str() ), 0 );
+				printf( "ProcessControlMessage() -- Case2: Send REPLY message to node.\n" );
 
 			}
 			else if ( waitingCS && reply_from_node[m.my_id] && !myPriority )
@@ -442,22 +442,25 @@ void *ProcessControlMessage(void *args)
 				receivedAllReply = false;
 
 				Message rpy("REPLY", myid, 0);
-				string rr = messageSerialization( rpy );
+				string msg = messageSerialization( rpy );
 
-				send( sockfd[m.my_id], &rr, sizeof(rr), 0 );
-				printf( "Case3: Send REPLY message to node.\n" );
+				send( sockfd[m.my_id], msg.c_str(), strlen( msg.c_str() ), 0 );
+				printf( "ProcessControlMessage() -- Case3: Send REPLY message to node.\n" );
 
 				usleep( 10000 );
 
 				Message r( "REQUEST", myid, seqNo );
-				send( sockfd[m.my_id], &r, sizeof(r), 0 );
+				string rr = messageSerialization( r );
+				send( sockfd[m.my_id], rr.c_str(), strlen( rr.c_str() ), 0 );
 			}
 			pthread_mutex_unlock( &dataMutex );
 		}
 		else if ( m.type == "REPLY" )
 		{
 			counter = 0;
+
 			pthread_mutex_lock( &dataMutex );
+
 			num_message_recv++;
 			count_reply++;
 			reply_from_node[m.my_id] = true;
@@ -477,7 +480,9 @@ void *ProcessControlMessage(void *args)
 					receivedAllReply = true;
 				}
 			}
+
 			pthread_mutex_unlock( &dataMutex );
+
 		}
 		else if ( m.type == "COMPLETE" )
 		{
@@ -561,9 +566,9 @@ int generateRandomeNumber( int min, int max )
 int main( int argc, char const *argv[] )
 {
 
-	Connection *conn;
+  Connection *conn;
 
-	initializationGlobalData( atoi(argv[1]) );
+  initializationGlobalData( atoi(argv[1]) );
 
   serverSock = socket( AF_INET, SOCK_STREAM, 0 );
 
