@@ -345,16 +345,15 @@ void *ProcessCriticalSection(void *args)
 
 		num_message_send++;
 		send( sockfd[0], cc.c_str(), strlen(cc.c_str()) + 1, 0 );
-		printf("Total sending message: %d\n", num_message_send);
 	}
 	else
 	{
 		completeNode[0] = true;
-		printf("Total sending message: %d\n", num_message_send);
 	}
 
 	pthread_mutex_unlock( &dataMutex );
 
+	printf("Total sending message: %d\n", num_message_send);
 	printf("Exit Session ProcessCriticalSection() thread\n");
 	pthread_exit( 0 );
 }
@@ -451,6 +450,7 @@ void *ProcessControlMessage(void *args)
 				Message rpy("REPLY", myid, 0);
 				string msg = messageSerialization( rpy );
 
+				num_message_send++;
 				send( sockfd[m.my_id], msg.c_str(), strlen( msg.c_str() ), 0 );
 				//printf( "ProcessControlMessage() -- Case2: Send REPLY message to node.\n" );
 
@@ -468,6 +468,7 @@ void *ProcessControlMessage(void *args)
 				Message rpy("REPLY", myid, 0);
 				string msg = messageSerialization( rpy );
 
+				num_message_send++;
 				send( sockfd[m.my_id], msg.c_str(), strlen( msg.c_str() ), 0 );
 				//printf( "ProcessControlMessage() -- Case3: Send REPLY message to node.\n" );
 
@@ -537,6 +538,7 @@ void *ProcessControlMessage(void *args)
 					{
 						if ( i != myid )
 						{
+							num_message_send++;
 							send( sockfd[i], cc.c_str(), strlen(cc.c_str()), 0 );
 						}
 					}
@@ -560,18 +562,12 @@ void *ProcessControlMessage(void *args)
 					close( sockfd[i] );
 				}
 			}
-			/*
-			for ( int i = 0; i < MAX_NUM_NODES; i++ )
-			{
-				printf( "%d", completeNode[i] );
-			}
-			printf( "\n" );
-			*/
 			pthread_mutex_unlock( &dataMutex );
 			break;
 		}
 		pthread_mutex_unlock( &dataMutex );
 	}
+
 	printf("Exit Session ProcessControl() thread\n");
 	Connection *con = (Connection *)args;
 	close( con->sockDesc );
