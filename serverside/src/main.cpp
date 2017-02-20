@@ -17,7 +17,7 @@
 #define MAX_NUM_NODES 10
 #define PORT_START 55688
 #define MAX_CS_ENTRY 40
-#define MAX_BUFFER_SIZE
+#define MAX_BUFFER_SIZE 256
 
 using namespace std;
 
@@ -57,9 +57,9 @@ pthread_mutex_t dataMutex = PTHREAD_MUTEX_INITIALIZER;
 
 typedef struct
 {
-	int 					sockDesc;
+	int             sockDesc;
 	sockaddr_in 	clientAddr;
-	int 					addrLen;
+	int             addrLen;
 }Connection;
 
 struct Message
@@ -82,7 +82,7 @@ string messageSerialization(Message m)
 {
 	// type,my_id,seqNo
 	string res = "";
-	res += ( m.type + "," + to_string(m.my_id) + "," + to_string(m.seqNo) );
+	res += ( m.type + "," + to_string( m.my_id ) + "," + to_string( m.seqNo ) );
 	return res;
 }
 
