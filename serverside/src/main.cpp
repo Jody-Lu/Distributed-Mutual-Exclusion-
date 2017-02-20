@@ -12,7 +12,7 @@
 #include "mythread.h"
 #include "server.h"
 
-#define MAX_NUM_NODES 2
+#define MAX_NUM_NODES 3
 #define PORT_START 55688
 #define MAX_CS_ENTRY 40
 #define MAX_BUFFER_SIZE
