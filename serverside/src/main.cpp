@@ -13,7 +13,7 @@
 #include "mythread.h"
 #include "server.h"
 
-#define MAX_NUM_NODES 8
+#define MAX_NUM_NODES 10
 #define PORT_START 55688
 #define MAX_CS_ENTRY 40
 #define MAX_BUFFER_SIZE
@@ -148,13 +148,13 @@ void initializationGlobalData(int id)
 			}
 
 			/* Initialize serv_addr */
-			memset(&serv_addr[i], 0, sizeof(sockaddr_in));
+			memset( &serv_addr[i], 0, sizeof(sockaddr_in) );
 			serv_addr[i].sin_family = AF_INET;
 			serv_addr[i].sin_port   = htons(portno[i]);
 
 			/* Set hostname */
 			string num_str = "";
-			if ( i + 1 < 10 )
+			if ( (i + 1) < 10 )
 			{
 				num_str = "0" + to_string( i + 1 );
 			}
