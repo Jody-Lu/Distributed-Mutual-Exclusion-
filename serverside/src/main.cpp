@@ -236,7 +236,7 @@ void *ProcessCriticalSection(void *args)
 			pthread_mutex_unlock( &dataMutex );
 			if ( no_cs_entry > 20 )
 			{
-				time_to_wait = generateRandomeNumber( 5, 10 );
+				time_to_wait = generateRandomeNumber( 45, 50 );
 				usleep( 10000 * time_to_wait );
 			}
 			else
