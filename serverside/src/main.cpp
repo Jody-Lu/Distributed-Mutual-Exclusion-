@@ -103,7 +103,7 @@ Message messageDeserialization(char *s)
 	pos = ss.find_first_of( ",", begin );
 	m.seqNo = atoi( ss.substr( begin, pos ).c_str() );
 
-	printf("type: %s, id: %d, seqNo: %d\n", m.type.c_str(), m.my_id, m.seqNo);
+	//printf("type: %s, id: %d, seqNo: %d\n", m.type.c_str(), m.my_id, m.seqNo);
 
 	return m;
 }
@@ -262,7 +262,7 @@ void *ProcessCriticalSection(void *args)
 		/* Send REQUEST */
 		pthread_mutex_lock( &dataMutex );
 
-		printf( "Send REQUEST and wait CS\n" );
+		//printf( "Send REQUEST and wait CS\n" );
 
 		waitingCS = true;
 		seqNo = highestSeqNum + 1;
@@ -286,7 +286,7 @@ void *ProcessCriticalSection(void *args)
 		pthread_mutex_unlock( &dataMutex );
 
 		/* After sending REQUESTs, wait until receiving all REPLYs */
-		printf("Entering CS\n");
+		//printf("Entering CS\n");
 		while ( 1 )
 		{
 			pthread_mutex_lock( &dataMutex );
@@ -311,7 +311,7 @@ void *ProcessCriticalSection(void *args)
 		}
 
 		/* After entering CS, send REPLYs to nodes in defer_node */
-		printf("Sending REPLY\n");
+		//printf("Sending REPLY\n");
 		pthread_mutex_lock( &dataMutex );
 
 		usingCS = false;
@@ -391,7 +391,7 @@ void *ProcessControlMessage(void *args)
 		numBytesRead = recv( conn->sockDesc, buffer, 256, 0 );
 		m = messageDeserialization( buffer );
 
-		printf( "Read %d bytes, type: %s, from node: %d seqNo: %d\n", numBytesRead, m.type.c_str(), m.my_id, m.seqNo);
+		//printf( "Read %d bytes, type: %s, from node: %d seqNo: %d\n", numBytesRead, m.type.c_str(), m.my_id, m.seqNo);
 
 		if ( numBytesRead == 0 )
 		{
@@ -434,7 +434,7 @@ void *ProcessControlMessage(void *args)
 				then defering the comming REQUEST.
 				 */
 				defer_node[m.my_id] = true;
-				printf( "ProcessControlMessage() -- Case 1: Defer comming REQUEST.\n" );
+				//printf( "ProcessControlMessage() -- Case 1: Defer comming REQUEST.\n" );
 
 			}
 			else if ( ( !usingCS || !waitingCS ) || ( waitingCS && !reply_from_node[m.my_id] && !myPriority ) )
@@ -451,7 +451,7 @@ void *ProcessControlMessage(void *args)
 				string msg = messageSerialization( rpy );
 
 				send( sockfd[m.my_id], msg.c_str(), strlen( msg.c_str() ), 0 );
-				printf( "ProcessControlMessage() -- Case2: Send REPLY message to node.\n" );
+				//printf( "ProcessControlMessage() -- Case2: Send REPLY message to node.\n" );
 
 			}
 			else if ( waitingCS && reply_from_node[m.my_id] && !myPriority )
@@ -468,7 +468,7 @@ void *ProcessControlMessage(void *args)
 				string msg = messageSerialization( rpy );
 
 				send( sockfd[m.my_id], msg.c_str(), strlen( msg.c_str() ), 0 );
-				printf( "ProcessControlMessage() -- Case3: Send REPLY message to node.\n" );
+				//printf( "ProcessControlMessage() -- Case3: Send REPLY message to node.\n" );
 
 				usleep( 10000 );
 
