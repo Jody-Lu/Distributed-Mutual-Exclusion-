@@ -113,17 +113,17 @@ void initializationGlobalData(int id)
 	hostent* host;
 
 	// Iniitalize myid
-	myid 						 		= id;
-	seqNo 					 		= 0;
+	myid 				    = id;
+	seqNo 					= 0;
 	num_message_send 		= 0;
 	num_message_recv 		= 0;
-	no_cs_entry 		 		= 0;
-	highestSeqNum				= 0;
-	usingCS 			   		= false;
+	no_cs_entry 		 	= 0;
+	highestSeqNum			= 0;
+	usingCS 			   	= false;
 	waitingCS        		= false;
-	all_nodes_connected = false;
-	receivedAllReply 	  = false;
-	exitSession					= false;
+	all_nodes_connected     = false;
+	receivedAllReply 	    = false;
+	exitSession				= false;
 
 	for ( int i = 0; i < MAX_NUM_NODES; i++ )
 	{
@@ -239,7 +239,7 @@ void *ProcessCriticalSection(void *args)
 			}
 			else
 			{
-				time_to_wait = generateRandomeNumber( 45, 50 );
+				time_to_wait = generateRandomeNumber( 5, 10 );
 				usleep( 10000 * time_to_wait );
 			}
 		}
@@ -447,12 +447,10 @@ void *ProcessControlMessage(void *args)
 				send( sockfd[m.my_id], &rr, sizeof(rr), 0 );
 				printf( "Case3: Send REPLY message to node.\n" );
 
-				/*
 				usleep( 10000 );
 
 				Message r( "REQUEST", myid, seqNo );
 				send( sockfd[m.my_id], &r, sizeof(r), 0 );
-				*/
 			}
 			pthread_mutex_unlock( &dataMutex );
 		}
