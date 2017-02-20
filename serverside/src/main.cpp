@@ -485,7 +485,7 @@ void *ProcessControlMessage(void *args)
 			counter = 0;
 
 			pthread_mutex_lock( &dataMutex );
-			requestCount++;
+			replyCount++;
 			num_message_recv++;
 			count_reply++;
 			reply_from_node[m.my_id] = true;
