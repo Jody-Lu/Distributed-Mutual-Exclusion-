@@ -14,7 +14,7 @@
 #include <cstdlib>
 #include <cstring>
 
-#define MAX_NUM_NODES 2
+#define MAX_NUM_NODES 10
 #define PORT_START 55688
 #define MAX_CS_ENTRY 40
 #define MAX_BUFFER_SIZE 256
@@ -23,34 +23,33 @@ using namespace std;
 
 
 // global variables
-pthread_t csThread;   // thread for request critical section of this node
-pthread_t connThread; // thread for handle connection to this node
+pthread_t csThread;        // thread for request critical section of this node
+pthread_t connThread;      // thread for handle connection to this node
 
 int sockfd[MAX_NUM_NODES]; // each sockfd for connecting to each node
 int portno[MAX_NUM_NODES]; // port numbers of nodess
 
-bool activeConnection[MAX_NUM_NODES]; 			 // whether connecting to server successfully
+bool active_connection[MAX_NUM_NODES]; 		 // whether connecting to server successfully
 struct sockaddr_in serv_addr[MAX_NUM_NODES]; // server address of other nodes
-bool reply_from_node[MAX_NUM_NODES]; 				 // check which node has reply
-bool defer_node[MAX_NUM_NODES];							 // record which node is defered
-bool completeNode[MAX_NUM_NODES];						 // whether node i has completed
+bool reply_from_node[MAX_NUM_NODES]; 		 // check which node has reply
+bool defer_node[MAX_NUM_NODES];			     // record which node is defered
+bool complete_node[MAX_NUM_NODES];           // whether node i has completed
 
-int seqNo;        		// sequence number of the message
-int serverSock;				// socket of this node
+int seq_no;        		// sequence number of the message
+int server_sock;        // socket of this node
 int myid;         		// id of this node
-int num_message_send; // messages sent by this node
-int num_message_recv; // messages received by this node
-//int no_cs_entry;			// times of entering CS
-int highestSeqNum;
-int requestCount, replyCount;
+int num_message_send;   // messages sent by this node
+int num_message_recv;   // messages received by this node
+int highest_seq_num;
+int request_count, reply_count;
 
-bool usingCS;							// whether this node is using CS
-bool waitingCS;						// whether this node is waiting CS
+bool using_CS;			  // whether this node is using CS
+bool waiting_CS;		  // whether this node is waiting CS
 bool all_nodes_connected; // whether all nodes are connected with each other
-bool receivedAllReply;		// whether receiving all replies
-bool exitSession;
+bool received_all_reply;  // whether receiving all replies
+bool exit_session;
 
-struct sockaddr_in serverAddr; // address of this node
+struct sockaddr_in server_addr; // address of this node
 
 // mutex
 pthread_mutex_t dataMutex = PTHREAD_MUTEX_INITIALIZER;
@@ -64,11 +63,11 @@ typedef struct
 
 struct Message
 {
-	string type;
+	string   type;
 	int 	 my_id;
-	int 	 seqNo;
+	int 	 seq_no;
 
-	Message(string s, int id, int n): type(s), my_id(id), seqNo(n) {}
+	Message(string s, int id, int n): type(s), my_id(id), seq_no(n) {}
 	Message() {}
 };
 
@@ -80,9 +79,9 @@ Message messageDeserialization(char *s);
 
 string messageSerialization(Message m)
 {
-	// type,my_id,seqNo
+	// type,my_id,seq_no
 	string res = "";
-	res += ( m.type + "," + to_string( m.my_id ) + "," + to_string( m.seqNo ) );
+	res += ( m.type + "," + to_string( m.my_id ) + "," + to_string( m.seq_no ) );
 	return res;
 }
 
@@ -103,9 +102,9 @@ Message messageDeserialization(char *s)
 	begin = pos + 1;
 
 	pos = ss.find_first_of( ",", begin );
-	m.seqNo = atoi( ss.substr( begin, pos ).c_str() );
+	m.seq_no = atoi( ss.substr( begin, pos ).c_str() );
 
-	//printf("type: %s, id: %d, seqNo: %d\n", m.type.c_str(), m.my_id, m.seqNo);
+	//printf("type: %s, id: %d, seq_no: %d\n", m.type.c_str(), m.my_id, m.seq_no);
 
 	return m;
 }
@@ -118,23 +117,23 @@ void initializationGlobalData(int id)
 
 	// Iniitalize myid
 	myid 				    = id;
-	seqNo 					= 0;
+	seq_no 					= 0;
 	num_message_send 		= 0;
 	num_message_recv 		= 0;
-	highestSeqNum			= 0;
-	usingCS 			   	= false;
-	waitingCS        		= false;
+	highest_seq_num			= 0;
+	using_CS 			   	= false;
+	waiting_CS        		= false;
 	all_nodes_connected     = false;
-	receivedAllReply 	    = false;
-	exitSession				= false;
+	received_all_reply 	    = false;
+	exit_session				= false;
 
 	for ( int i = 0; i < MAX_NUM_NODES; i++ )
 	{
 		/* Initialize active connection */
-		activeConnection[i] = false;
+		active_connection[i] = false;
 		reply_from_node[i]  = false;
 		defer_node[i] 		= false;
-		completeNode[i]		= false;
+		complete_node[i]		= false;
 
 		/* Initialize port number */
 		portno[i] = PORT_START + i;
@@ -183,7 +182,7 @@ void initializationGlobalData(int id)
 			}
 			else
 			{
-				activeConnection[i] = true;
+				active_connection[i] = true;
 			}
 		}
 	}
@@ -208,14 +207,14 @@ void *ProcessCriticalSection(void *args)
 			continue;
 		}
 
-		while ( activeConnection[i] == false )
+		while ( active_connection[i] == false )
 		{
 			sockfd[i] = socket( AF_INET, SOCK_STREAM, 0 );
 
 			if ( connect( sockfd[i], (struct sockaddr *) &serv_addr[i], sizeof(serv_addr[i]) ) > -1 )
 			{
 				cout << "Successfully connecting to node: " << i << endl;
-				activeConnection[i] = true;
+				active_connection[i] = true;
 			}
 			else
 			{
@@ -257,12 +256,12 @@ void *ProcessCriticalSection(void *args)
 		pthread_mutex_lock( &dataMutex );
 
 		//printf( "Send REQUEST and wait CS\n" );
-		requestCount = 0;
-		replyCount = 0;
-		waitingCS = true;
-		seqNo = highestSeqNum + 1;
+		request_count = 0;
+		reply_count = 0;
+		waiting_CS = true;
+		seq_no = highest_seq_num + 1;
 
-		Message m("REQUEST", myid, seqNo);
+		Message m("REQUEST", myid, seq_no);
 		string mm = messageSerialization( m );
 
 		gettimeofday( &tv, NULL );
@@ -273,7 +272,7 @@ void *ProcessCriticalSection(void *args)
 			/* Send REQUEST only when there is no REPLY. */
 			if ( i != myid && !reply_from_node[i] )
 			{
-				requestCount++;
+				request_count++;
 				num_message_send++;
 				send( sockfd[i], mm.c_str(), strlen( mm.c_str() ), 0 );
 			}
@@ -287,15 +286,15 @@ void *ProcessCriticalSection(void *args)
 		{
 			pthread_mutex_lock( &dataMutex );
 
-			if ( receivedAllReply )
+			if ( received_all_reply )
 			{
 				gettimeofday( &tv, NULL );
 				end = tv.tv_sec * 1000 + tv.tv_usec / 1000;
-				usingCS = true;
-				waitingCS = false;
+				using_CS = true;
+				waiting_CS = false;
 				no_cs_entry++;
 
-				printf("REQUESTs: %d, REPLYs: %d\n", requestCount, replyCount);
+				printf("REQUESTs: %d, REPLYs: %d\n", request_count, reply_count);
 				printf("Time elapsed: %ld \n", end - begin);
 				printf("Entering...\n");
 				usleep( 30000 );
@@ -312,7 +311,7 @@ void *ProcessCriticalSection(void *args)
 		//printf("Sending REPLY\n");
 		pthread_mutex_lock( &dataMutex );
 
-		usingCS = false;
+		using_CS = false;
 
 		Message r("REPLY", myid, 0);
 
@@ -326,7 +325,7 @@ void *ProcessCriticalSection(void *args)
 				num_message_send++;
 				defer_node[i] 	   = false;
 				reply_from_node[i] = false;
-				receivedAllReply   = false;
+				received_all_reply   = false;
 
 				send( sockfd[i], rr.c_str(), strlen( rr.c_str() ), 0 );
 			}
@@ -346,7 +345,7 @@ void *ProcessCriticalSection(void *args)
 	}
 	else
 	{
-		completeNode[0] = true;
+		complete_node[0] = true;
 	}
 
 	pthread_mutex_unlock( &dataMutex );
@@ -390,7 +389,7 @@ void *ProcessControlMessage(void *args)
 		numBytesRead = recv( conn->sockDesc, buffer, 256, 0 );
 		m = messageDeserialization( buffer );
 
-		//printf( "Read %d bytes, type: %s, from node: %d seqNo: %d\n", numBytesRead, m.type.c_str(), m.my_id, m.seqNo);
+		//printf( "Read %d bytes, type: %s, from node: %d seq_no: %d\n", numBytesRead, m.type.c_str(), m.my_id, m.seq_no);
 
 		if ( numBytesRead == 0 )
 		{
@@ -409,24 +408,24 @@ void *ProcessControlMessage(void *args)
 				}
 			}
 
-			/* Record the highest comming seqNo */
-			if ( m.seqNo > highestSeqNum )
+			/* Record the highest comming seq_no */
+			if ( m.seq_no > highest_seq_num )
 			{
-				highestSeqNum = m.seqNo;
+				highest_seq_num = m.seq_no;
 			}
 
 			num_message_recv++;
 
 			/* Two senario that this node gets priority
-			 - my.seqNo > seqNo
-			 - m.seqNo == seqNo && m.my_id > myid
+			 - my.seq_no > seq_no
+			 - m.seq_no == seq_no && m.my_id > myid
 			 */
-			if ( m.seqNo > seqNo || ( m.seqNo == seqNo && m.my_id > myid ) )
+			if ( m.seq_no > seq_no || ( m.seq_no == seq_no && m.my_id > myid ) )
 			{
 				myPriority = true;
 			}
 
-			if ( usingCS || ( waitingCS && myPriority ) )
+			if ( using_CS || ( waiting_CS && myPriority ) )
 			{
 				/*
 				If this node is using CS or waiting CS and got priority,
@@ -436,7 +435,7 @@ void *ProcessControlMessage(void *args)
 				//printf( "ProcessControlMessage() -- Case 1: Defer comming REQUEST.\n" );
 
 			}
-			else if ( ( !usingCS || !waitingCS ) || ( waitingCS && !reply_from_node[m.my_id] && !myPriority ) )
+			else if ( ( !using_CS || !waiting_CS ) || ( waiting_CS && !reply_from_node[m.my_id] && !myPriority ) )
 			{
 				/*
 				If this node is not using CS or not waiting CS, or waiting CS but not receiving REPLY from m.my_id
@@ -444,7 +443,7 @@ void *ProcessControlMessage(void *args)
 				 */
 
 				reply_from_node[m.my_id] = false;
-				receivedAllReply = false;
+				received_all_reply = false;
 
 				Message rpy("REPLY", myid, 0);
 				string msg = messageSerialization( rpy );
@@ -454,7 +453,7 @@ void *ProcessControlMessage(void *args)
 				//printf( "ProcessControlMessage() -- Case2: Send REPLY message to node.\n" );
 
 			}
-			else if ( waitingCS && reply_from_node[m.my_id] && !myPriority )
+			else if ( waiting_CS && reply_from_node[m.my_id] && !myPriority )
 			{
 				/*
 				If this node is waiting CS and got REPLY from m.my_id but not its priority,
@@ -462,19 +461,19 @@ void *ProcessControlMessage(void *args)
 				 */
 
 				reply_from_node[m.my_id] = false;
-				receivedAllReply = false;
+				received_all_reply = false;
 
 				Message rpy("REPLY", myid, 0);
 				string msg = messageSerialization( rpy );
 
 				num_message_send++;
-				requestCount++;
+				request_count++;
 				send( sockfd[m.my_id], msg.c_str(), strlen( msg.c_str() ), 0 );
 				//printf( "ProcessControlMessage() -- Case3: Send REPLY message to node.\n" );
 
 				usleep( 10000 );
 
-				Message r( "REQUEST", myid, seqNo );
+				Message r( "REQUEST", myid, seq_no );
 				string rr = messageSerialization( r );
 				num_message_send++;
 				send( sockfd[m.my_id], rr.c_str(), strlen( rr.c_str() ), 0 );
@@ -486,12 +485,12 @@ void *ProcessControlMessage(void *args)
 			counter = 0;
 
 			pthread_mutex_lock( &dataMutex );
-			replyCount++;
+			reply_count++;
 			num_message_recv++;
 			count_reply++;
 			reply_from_node[m.my_id] = true;
 
-			if ( !receivedAllReply )
+			if ( !received_all_reply )
 			{
 				for ( int i = 0; i < MAX_NUM_NODES; i++ )
 				{
@@ -503,7 +502,7 @@ void *ProcessControlMessage(void *args)
 
 				if ( counter == MAX_NUM_NODES - 1 )
 				{
-					receivedAllReply = true;
+					received_all_reply = true;
 				}
 			}
 
@@ -518,11 +517,11 @@ void *ProcessControlMessage(void *args)
 			if ( myid == 0 )
 			{
 				exitCompute = true;
-				completeNode[m.my_id] = true;
+				complete_node[m.my_id] = true;
 
 				for ( int i = 0; i < MAX_NUM_NODES; i++ )
 				{
-					if ( !completeNode[i] )
+					if ( !complete_node[i] )
 					{
 						exitCompute = false;
 						break;
@@ -532,7 +531,7 @@ void *ProcessControlMessage(void *args)
 				{
 					//printf("Exit compute is true!\n");
 
-					exitSession = true;
+					exit_session = true;
 
 					Message c( "COMPLETE", myid, 0 );
 					string cc = messageSerialization( c );
@@ -549,13 +548,13 @@ void *ProcessControlMessage(void *args)
 			}
 			else if (m.my_id == 0)
 			{
-				exitSession = true;
+				exit_session = true;
 			}
 			pthread_mutex_unlock( &dataMutex );
 		}
 
 		pthread_mutex_lock( &dataMutex );
-		if ( exitSession )
+		if ( exit_session )
 		{
 			//printf("Close socket connections\n");
 			for ( int i = 0; i < MAX_NUM_NODES; i++ )
@@ -592,31 +591,31 @@ int main( int argc, char const *argv[] )
 
   initializationGlobalData( atoi(argv[1]) );
 
-  serverSock = socket( AF_INET, SOCK_STREAM, 0 );
+  server_sock = socket( AF_INET, SOCK_STREAM, 0 );
 
-  if ( serverSock <= 0 )
+  if ( server_sock <= 0 )
   {
   	cout << " ERROR creating server" << endl;
   	return -1;
   }
 
-  memset( &serverAddr, 0, sizeof( sockaddr_in ) );
-  serverAddr.sin_family = AF_INET;
-  serverAddr.sin_addr.s_addr = INADDR_ANY;
-  serverAddr.sin_port = htons( portno[myid] );
+  memset( &server_addr, 0, sizeof( sockaddr_in ) );
+  server_addr.sin_family = AF_INET;
+  server_addr.sin_addr.s_addr = INADDR_ANY;
+  server_addr.sin_port = htons( portno[myid] );
 
   int yes = 1;
 
   // Avoid bind error if the socket was not close()'d last time;
-  setsockopt(serverSock, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof(int));
+  setsockopt(server_sock, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof(int));
 
-  if ( bind(serverSock, (struct sockaddr *) &serverAddr, sizeof(sockaddr_in)) < 0 )
+  if ( bind(server_sock, (struct sockaddr *) &server_addr, sizeof(sockaddr_in)) < 0 )
   {
   	cout << "ERROR binding" << endl;
   	return -1;
   }
 
-  if ( listen(serverSock, 10) < 0 )
+  if ( listen(server_sock, 10) < 0 )
   {
   	cout << "ERROR listening" << endl;
   	return -1;
@@ -638,7 +637,7 @@ int main( int argc, char const *argv[] )
   		return -1;
   	}
 
-  	conn->sockDesc = accept( serverSock, (struct sockaddr *) &conn->clientAddr, (socklen_t *)&conn->addrLen );
+  	conn->sockDesc = accept( server_sock, (struct sockaddr *) &conn->clientAddr, (socklen_t *)&conn->addrLen );
 
   	//printf("sockDesc: %d\n", conn->sockDesc);
 
@@ -653,14 +652,14 @@ int main( int argc, char const *argv[] )
   		pthread_create( &connThread, 0, ProcessControlMessage, (void *)conn );
   		pthread_detach( connThread );
   	}
-  	if ( exitSession )
+  	if ( exit_session )
   	{
   		break;
   	}
   }
 
   printf("Computation completes\n");
-  close( serverSock );
+  close( server_sock );
   free( conn );
   return 0;
 }
