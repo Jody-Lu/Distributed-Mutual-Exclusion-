@@ -1,5 +1,5 @@
 CFLAGS=-Wall -g -pthread
-LDFLAGS=-Wall -g -lpthread -pthread
+LDFLAGS=-Wall -g -lpthread -std=c++11
 
 COMPILE=g++ $(CFLAGS) -c
 LINK=g++ $(LDFLAGS) -o
@@ -7,10 +7,9 @@ LINK=g++ $(LDFLAGS) -o
 SRCDIR=./src
 OBJDIR=./obj
 #OBJ=$(patsubst $(SRCDIR)/%.cpp,$(OBJDIR)/%.o,$(wildcard $(SRCDIR)/*.cpp))
-#OBJ=$(OBJDIR)/main.o $(OBJDIR)/mythread.o $(OBJDIR)/server.o $(OBJDIR)/client.o
-OBJ=$(OBJDIR)/main.o
+OBJ=$(OBJDIR)/main.o $(OBJDIR)/node.o $(OBJDIR)/mythread.o
 BINDIR=./bin
-BIN=$(BINDIR)/node
+BIN=$(BINDIR)/Node
 
 
 all: $(BIN) 

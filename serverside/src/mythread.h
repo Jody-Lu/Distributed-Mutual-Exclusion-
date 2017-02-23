@@ -8,23 +8,21 @@
 
 #include <cstdlib>
 
-using namespace std;
-
 class MyThread {
-  public:
-    pthread_t tid;
+	public:
+		pthread_t tid;
 
-  private:
-    static pthread_mutex_t mutex;
+	private:
+		static pthread_mutex_t mutex;
 
-  public:
-    MyThread();
-    int Create(void *Callback, void *args);
-    int Join();
+	public:
+		MyThread();
+		int Create( void *Callback, void *args );
+		int Detach( );
 
-    static int InitMutex();
-    static int LockMutex(const char *identifier);
-    static int UnlockMutex(const char *identifier);
+		static int InitMutex( );
+		static int LockMutex( const char *identifier );
+		static int UnlockMutex( const char *identifier);
 };
 
 #endif
